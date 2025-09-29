@@ -45,6 +45,29 @@ const Game = () => {
 
   const gameLoopRef = useRef<number>();
 
+  // Restart function to reinitialize game
+  const restart = useCallback(() => {
+    setGameState("playing");
+    setRestartTimer(0);
+  }, []);
+
+  // Auto-restart logic (moved to top level)
+  useEffect(() => {
+    if (gameState === "gameover" && restartTimer > 0) {
+      const interval = setInterval(() => {
+        setRestartTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            restart();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [gameState, restartTimer, restart]);
+
   const initGame = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -174,6 +197,7 @@ const Game = () => {
         setGameState("gameover");
         // Auto-restart timer starts here
         setRestartTimer(3);
+        return; // Stop update on gameover
       }
       if (player.x < 0) player.x = 0;
 
@@ -255,6 +279,7 @@ const Game = () => {
         if (dist < player.radius + (obs.type === "sign" ? 20 : 15)) {
           setGameState("gameover");
           setRestartTimer(3);
+          return; // Stop update on collision
         }
       });
 
@@ -363,21 +388,8 @@ const Game = () => {
         ctx.fillText("Click to shoot web, release to swing!", canvas.width / 2, canvas.height / 2);
         ctx.fillText("Avoid drones, enemies, and signs", canvas.width / 2, canvas.height / 2 + 30);
         ctx.fillText("Click anywhere to start", canvas.width / 2, canvas.height / 2 + 80);
-      } else if (gameState === "gameover") {
-        ctx.fillStyle = "rgba(0,0,0,0.7)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "white";
-        ctx.font = "bold 48px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText("Game Over!", canvas.width / 2, canvas.height / 2 - 50);
-        ctx.font = "24px Arial";
-        ctx.fillText(`Final Score: ${Math.floor(distance)}`, canvas.width / 2, canvas.height / 2);
-        ctx.fillText(`High Score: ${highScore}`, canvas.width / 2, canvas.height / 2 + 30);
-        if (restartTimer > 0) {
-          ctx.fillText(`Restarting in ${restartTimer}s...`, canvas.width / 2, canvas.height / 2 + 80);
-        }
-        ctx.textAlign = "left";
       }
+      // Removed gameover drawing - handled by component overlay
     };
 
     const loop = () => {
@@ -409,28 +421,6 @@ const Game = () => {
       loop();
     };
 
-    const restart = () => {
-      cancelAnimationFrame(gameLoopRef.current!);
-      startGame();
-    };
-
-    // Auto-restart logic
-    useEffect(() => {
-      if (gameState === "gameover" && restartTimer > 0) {
-        const interval = setInterval(() => {
-          setRestartTimer((prev) => {
-            if (prev <= 1) {
-              clearInterval(interval);
-              restart();
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-        return () => clearInterval(interval);
-      }
-    }, [gameState, restartTimer]);
-
     if (gameState === "menu") {
       draw();
       canvas.onclick = startGame;
@@ -438,6 +428,8 @@ const Game = () => {
         e.preventDefault();
         startGame();
       };
+    } else if (gameState === "playing") {
+      startGame();
     }
 
     return () => {
@@ -450,7 +442,7 @@ const Game = () => {
       canvas.onclick = null;
       canvas.ontouchstart = null;
     };
-  }, [gameState, highScore, restartTimer]);
+  }, [gameState, highScore, restartTimer]); // Dependencies include gameState to react to changes
 
   useEffect(() => {
     if (gameState === "playing" || gameState === "menu") {
