@@ -42,7 +42,6 @@ const indexRoute = createTanStackRoute({
   getParentRoute: () => layoutRoute,
   path: '/',
   component: Index,
-  id: 'index'
 })
 
 // Create game route
@@ -50,7 +49,6 @@ const gameRoute = createTanStackRoute({
   getParentRoute: () => layoutRoute,
   path: '/game',
   component: Game,
-  id: 'game'
 })
 
 // Create not found route
@@ -58,7 +56,6 @@ const notFoundRoute = createTanStackRoute({
   getParentRoute: () => layoutRoute,
   path: '*',
   component: NotFound,
-  id: 'not-found'
 })
 
 // Create route tree
