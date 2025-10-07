@@ -429,7 +429,7 @@ const Game = () => {
         }, 1000);
         return () => clearInterval(interval);
       }
-    }, [gameState, restartTimer]);
+    }, [gameState, restartTimer, restart]); // Added restart to dependencies
 
     if (gameState === "menu") {
       draw();
@@ -454,6 +454,7 @@ const Game = () => {
 
   useEffect(() => {
     if (gameState === "playing" || gameState === "menu") {
+      // Call initGame inside the effect callback
       return initGame();
     }
   }, [initGame, gameState]);
